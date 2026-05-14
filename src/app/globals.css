@@ -1,0 +1,227 @@
+@import "tailwindcss";
+
+@theme {
+  /* FirellySAT Brand Colors */
+  --color-brand-50: oklch(97% 0.05 85);
+  --color-brand-100: oklch(93% 0.10 85);
+  --color-brand-200: oklch(87% 0.16 85);
+  --color-brand-300: oklch(80% 0.20 75);
+  --color-brand-400: oklch(73% 0.22 68);
+  --color-brand-500: oklch(72% 0.20 62);
+  --color-brand-600: oklch(63% 0.18 58);
+  --color-brand-700: oklch(53% 0.16 54);
+  --color-brand-800: oklch(43% 0.13 50);
+  --color-brand-900: oklch(33% 0.10 46);
+
+  /* Deep Navy (night sky) */
+  --color-deep-900: #050B18;
+  --color-deep-800: #0A1428;
+  --color-deep-700: #0F1B35;
+  --color-deep-600: #142342;
+  --color-deep-500: #1A2C52;
+
+  /* Calm Teal */
+  --color-calm-400: #2DD4BF;
+  --color-calm-500: #14B8A6;
+  --color-calm-600: #0D9488;
+
+  /* Glow Amber (firefly) */
+  --color-glow-300: #FCD34D;
+  --color-glow-400: #FBBF24;
+  --color-glow-500: #F59E0B;
+  --color-glow-600: #D97706;
+
+  /* Violet accent */
+  --color-violet-400: #A78BFA;
+  --color-violet-500: #8B5CF6;
+  --color-violet-600: #7C3AED;
+
+  /* Font family */
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-plus-jakarta), var(--font-inter), system-ui, sans-serif;
+
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-glow-sm: 0 0 12px rgba(245, 158, 11, 0.3);
+  --shadow-glow-md: 0 0 24px rgba(245, 158, 11, 0.4);
+  --shadow-glow-lg: 0 0 48px rgba(245, 158, 11, 0.5);
+  --shadow-calm: 0 0 24px rgba(20, 184, 166, 0.3);
+}
+
+:root {
+  --background: #050B18;
+  --foreground: #F1F5F9;
+  --card: #0A1428;
+  --card-foreground: #F1F5F9;
+  --popover: #0F1B35;
+  --popover-foreground: #F1F5F9;
+  --primary: #F59E0B;
+  --primary-foreground: #050B18;
+  --secondary: #142342;
+  --secondary-foreground: #CBD5E1;
+  --muted: #1A2C52;
+  --muted-foreground: #94A3B8;
+  --accent: #8B5CF6;
+  --accent-foreground: #F1F5F9;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: #F59E0B;
+  --calm: #14B8A6;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+}
+
+* {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Firefly glow animation */
+@keyframes firefly-pulse {
+  0%, 100% { opacity: 0.6; filter: blur(0px); }
+  50% { opacity: 1; filter: blur(1px); }
+}
+
+@keyframes firefly-float {
+  0% { transform: translateY(0px) translateX(0px); opacity: 0; }
+  25% { opacity: 0.8; }
+  75% { opacity: 0.8; }
+  100% { transform: translateY(-80px) translateX(30px); opacity: 0; }
+}
+
+@keyframes glow-breathe {
+  0%, 100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.2); }
+  50% { box-shadow: 0 0 24px rgba(245, 158, 11, 0.5); }
+}
+
+@keyframes calm-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes streak-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.animate-firefly { animation: firefly-pulse 3s ease-in-out infinite; }
+.animate-firefly-float { animation: firefly-float 6s ease-in-out infinite; }
+.animate-glow-breathe { animation: glow-breathe 3s ease-in-out infinite; }
+.animate-calm-breathe { animation: calm-breathe 4s ease-in-out infinite; }
+.animate-slide-up { animation: slide-up 0.5s ease-out forwards; }
+.animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
+.animate-streak { animation: streak-bounce 0.6s ease-in-out; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* Glass morphism */
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #F59E0B, #FCD34D, #FBBF24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-calm {
+  background: linear-gradient(135deg, #14B8A6, #2DD4BF, #5EEAD4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Firefly star field */
+.star-field {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #FBBF24;
+  animation: firefly-pulse var(--duration, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+/* Question card styling */
+.question-content p { margin-bottom: 0.75rem; line-height: 1.7; }
+.question-content ul, .question-content ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+.question-content li { margin-bottom: 0.25rem; }
+.question-content strong { color: #FCD34D; }
+.question-content em { color: #A78BFA; font-style: italic; }
+
+/* Math rendering */
+.MathJax { color: inherit !important; }
+
+/* Focus rings */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Loading shimmer */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.02) 0%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.02) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+}
