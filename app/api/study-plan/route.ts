@@ -20,12 +20,18 @@ export async function POST(request: Request) {
 
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-  const response = await openai.responses.create({
+  const response = await openai.chat.completions.create({
     model: "gpt-4.1-mini",
-    input: `Create a concise SAT study plan that reduces anxiety and improves score progression. Student goal: ${goal}`,
+    messages: [
+      {
+        role: "user",
+        content: `Create a concise SAT study plan that reduces anxiety and improves score progression. Student goal: ${goal}`,
+      },
+    ],
   });
 
-  const plan = response.output_text?.trim() || fallbackPlan(goal);
+  const message = response.choices[0]?.message?.content;
+  const plan = (typeof message === "string" ? message.trim() : "") || fallbackPlan(goal);
 
   return Response.json({ plan });
 }

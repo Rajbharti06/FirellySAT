@@ -28,7 +28,7 @@ export const practiceQuestions = [
     topic: "Reading",
     difficulty: "Easy",
     prompt:
-      "Which choice best describes the author\'s tone in a passage that praises innovation while warning of overconfidence?",
+      "Which choice best describes the author's tone in a passage that praises innovation while warning of overconfidence?",
     options: ["Neutral", "Optimistic yet cautious", "Sarcastic", "Dismissive"],
     answer: "Optimistic yet cautious",
   },
