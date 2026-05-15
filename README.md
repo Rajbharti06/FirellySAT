@@ -22,7 +22,7 @@ Targeted, adaptive practice sessions powered by 2,000+ official CollegeBoard SAT
 - **Inline Notes** — Add personal notes to any question during review
 - **Calm Mode** — Breathing reminders, affirmations, gentle pacing for anxious test-takers
 
-![Practice Session](docs/screenshots/practice.png)
+![Practice Session](docs/screenshots/practice-setup.png)
 
 ---
 
@@ -39,6 +39,9 @@ Authentic 4-module Bluebook-format mock test with proctor simulation.
 - **Score History** — Track improvement across multiple attempts
 
 ![Mock Test](docs/screenshots/mock-test.png)
+
+> **Mock History** — track all your attempts and score trends:
+> ![Mock History](docs/screenshots/mock-history.png)
 
 ---
 
@@ -57,6 +60,9 @@ Comprehensive analytics and progress tracking.
 - **AI Score Prediction** — Weakest skills identified and focus recommendations
 
 ![Dashboard](docs/screenshots/dashboard.png)
+
+> **Question Bank** — browse and filter 2,000+ official questions:
+> ![Question Bank](docs/screenshots/questionbank.png)
 
 ---
 
@@ -88,6 +94,9 @@ Two-tab system for structured review.
 - Clear logbook with confirmation guard
 
 ![Notes & Logbook](docs/screenshots/notes.png)
+
+> **AI Study Plan** — personalized week-by-week roadmap:
+> ![Study Plan](docs/screenshots/study-plan.png)
 
 ---
 
@@ -136,9 +145,13 @@ Context-aware chat powered by Llama 3.1-8B.
 | | |
 |---|---|
 | ![Home](docs/screenshots/home.png) | ![Practice Setup](docs/screenshots/practice-setup.png) |
-| **Home — Firefly dark theme** | **Practice Setup — Adaptive mode toggle** |
-| ![Mock Test Active](docs/screenshots/mock-active.png) | ![Results](docs/screenshots/results.png) |
-| **Mock Test — Proctor mode fullscreen** | **Session Analysis — Skill breakdown** |
+| **Home — Firefly dark theme** | **Practice Rush — Adaptive mode & topic filters** |
+| ![Mock Test](docs/screenshots/mock-test.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+| **Mock Test — 4-module Bluebook format + proctor mode** | **Dashboard — Score tracking & analytics** |
+| ![Notes & Logbook](docs/screenshots/notes.png) | ![Study Plan](docs/screenshots/study-plan.png) |
+| **Notes & Wrong Answers Logbook** | **AI Study Plan Generator** |
+| ![Question Bank](docs/screenshots/questionbank.png) | ![Mock History](docs/screenshots/mock-history.png) |
+| **Question Bank — 2,000+ official questions** | **Mock Test History — Score trends** |
 
 ---
 
