@@ -193,12 +193,25 @@ body {
   animation-delay: var(--delay, 0s);
 }
 
-/* Question card styling */
-.question-content p { margin-bottom: 0.75rem; line-height: 1.7; }
+/* Question card styling — covers all CollegeBoard HTML patterns */
+.question-content { word-spacing: normal; letter-spacing: normal; white-space: normal; }
+.question-content p { margin-bottom: 0.75rem; line-height: 1.8; }
 .question-content ul, .question-content ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
-.question-content li { margin-bottom: 0.25rem; }
-.question-content strong { color: #FCD34D; }
-.question-content em { color: #A78BFA; font-style: italic; }
+.question-content li { margin-bottom: 0.35rem; line-height: 1.7; }
+.question-content strong, .question-content b { color: #FCD34D; font-weight: 600; }
+.question-content em, .question-content i { color: #A78BFA; font-style: italic; }
+.question-content span { white-space: normal !important; word-spacing: normal !important; letter-spacing: normal !important; }
+.question-content table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.875rem; }
+.question-content th, .question-content td { border: 1px solid rgba(255,255,255,0.15); padding: 0.4rem 0.6rem; text-align: left; line-height: 1.5; }
+.question-content th { background: rgba(255,255,255,0.06); color: #F1F5F9; font-weight: 600; }
+.question-content td { color: #CBD5E1; }
+.question-content img { max-width: 100%; height: auto; border-radius: 0.5rem; margin: 0.5rem 0; }
+.question-content sub, .question-content sup { font-size: 0.75em; }
+.question-content br { display: block; margin: 0.25rem 0; content: ''; }
+.question-content * { max-width: 100%; box-sizing: border-box; }
+.question-content [style*="font-family"] { font-family: inherit !important; }
+.question-content blockquote { border-left: 3px solid rgba(245,158,11,0.4); padding-left: 1rem; margin: 0.75rem 0; color: #94A3B8; font-style: italic; }
+.question-content .math { font-family: 'STIX Two Math', 'Computer Modern', Georgia, serif; }
 
 /* Math rendering */
 .MathJax { color: inherit !important; }

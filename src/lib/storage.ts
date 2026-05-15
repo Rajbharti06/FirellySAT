@@ -10,6 +10,8 @@ import type {
   QuestionDifficulty,
   Note,
   NoteQuestion,
+  LogbookEntry,
+  MockTestAttempt,
 } from "@/types";
 import { generateId } from "./utils";
 
@@ -23,6 +25,7 @@ const KEYS = {
   ONBOARDING_DONE: "firellysat_onboarded",
   NOTES: "firellysat_notes",
   NOTE_QUESTIONS: "firellysat_note_questions",
+  LOGBOOK: "firellysat_logbook",
 } as const;
 
 function safeGet<T>(key: string, fallback: T): T {
@@ -318,4 +321,65 @@ export function removeQuestionFromNote(noteId: string, questionId: string): void
   note.savedQuestionIds = note.savedQuestionIds.filter((id) => id !== questionId);
   note.updatedAt = new Date().toISOString();
   saveNote(note);
+}
+
+// ─── Logbook ──────────────────────────────────────────────────────────────────
+
+export function getLogbook(): LogbookEntry[] {
+  return safeGet<LogbookEntry[]>(KEYS.LOGBOOK, []);
+}
+
+export function addLogbookEntry(entry: Omit<LogbookEntry, "id">): void {
+  const logbook = getLogbook();
+  // Avoid exact duplicates (same questionId + timestamp within 5 seconds)
+  const recent = logbook.find(
+    (e) =>
+      e.questionId === entry.questionId &&
+      Math.abs(new Date(e.timestamp).getTime() - new Date(entry.timestamp).getTime()) < 5000
+  );
+  if (recent) return;
+  safeSet(KEYS.LOGBOOK, [{ ...entry, id: generateId() }, ...logbook].slice(0, 500));
+}
+
+export function clearLogbook(): void {
+  safeSet(KEYS.LOGBOOK, []);
+}
+
+export function getLogbookStats(): { total: number; byDomain: Record<string, number>; bySkill: Record<string, number> } {
+  const entries = getLogbook();
+  const byDomain: Record<string, number> = {};
+  const bySkill: Record<string, number> = {};
+  for (const e of entries) {
+    byDomain[e.domain] = (byDomain[e.domain] || 0) + 1;
+    bySkill[e.skill] = (bySkill[e.skill] || 0) + 1;
+  }
+  return { total: entries.length, byDomain, bySkill };
+}
+
+// ─── Mock Test Attempts ───────────────────────────────────────────────────────
+
+export function getMockAttempts(): MockTestAttempt[] {
+  return safeGet<MockTestAttempt[]>("firellysat_mock_attempts", []);
+}
+
+export function saveMockAttempt(attempt: MockTestAttempt): void {
+  const attempts = getMockAttempts();
+  safeSet("firellysat_mock_attempts", [attempt, ...attempts].slice(0, 20));
+}
+
+export function getLatestMockScore(): MockTestAttempt | null {
+  const attempts = getMockAttempts();
+  return attempts.length > 0 ? attempts[0] : null;
+}
+
+// ─── Mock Test Question Deduplication ─────────────────────────────────────────
+
+export function getMockUsedQuestionIds(): string[] {
+  return safeGet<string[]>("firellysat_mock_used_qs", []);
+}
+
+export function addMockUsedQuestionIds(ids: string[]): void {
+  const existing = getMockUsedQuestionIds();
+  const merged = [...new Set([...existing, ...ids])];
+  safeSet("firellysat_mock_used_qs", merged.slice(-400));
 }

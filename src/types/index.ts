@@ -195,4 +195,35 @@ export interface NoteQuestion {
   correctAnswer: string[];
   rationale?: string;
   snapshotAt: string;
+  userNote?: string;
+}
+
+export interface LogbookEntry {
+  id: string;
+  timestamp: string;
+  questionId: string;
+  stem: string;
+  domain: QuestionDomain;
+  skill: string;
+  difficulty: QuestionDifficulty;
+  userAnswer: string;
+  correctAnswer: string[];
+  rationale?: string;
+  source: "practice" | "mock_test";
+  mockAttemptId?: string;
+}
+
+export interface MockTestAttempt {
+  id: string;
+  attemptNumber: number;
+  startedAt: string;
+  completedAt: string;
+  totalScore: number;
+  rwScore: number;
+  mathScore: number;
+  rwCorrect: number;
+  mathCorrect: number;
+  rwTotal: 54;
+  mathTotal: 44;
+  durationSeconds: number;
 }

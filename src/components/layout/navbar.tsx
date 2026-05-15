@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 const navLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/practice", label: "Practice", icon: Flame },
+  { href: "/mock-test", label: "Mock Test", icon: FileText },
   { href: "/study-plan", label: "Study Plan", icon: Sparkles },
   { href: "/questionbank", label: "Question Bank", icon: BookMarked },
   { href: "/notes", label: "Notes", icon: FileText },

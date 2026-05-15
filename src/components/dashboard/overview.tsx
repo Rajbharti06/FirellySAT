@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Flame, Target, TrendingUp, Clock, BookMarked,
-  CheckCircle2, Sparkles, Brain, Wind, ArrowRight
+  CheckCircle2, Sparkles, Brain, Wind, ArrowRight, FileText
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -16,25 +16,30 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  getStats, getDefaultStats, getSavedQuestions, getStudyPlan
+  getStats, getDefaultStats, getSavedQuestions, getStudyPlan,
+  getLatestMockScore, getMockAttempts
 } from "@/lib/storage";
 import {
   predictScore, getGreeting, getMotivationalQuote,
-  formatDuration, domainLabel
+  formatDuration, formatTime, domainLabel
 } from "@/lib/utils";
-import type { PracticeStatistics } from "@/types";
+import type { PracticeStatistics, MockTestAttempt } from "@/types";
 
 export function DashboardOverview() {
   const [stats, setStats] = useState<PracticeStatistics>(getDefaultStats());
   const [savedCount, setSavedCount] = useState(0);
   const [hasStudyPlan, setHasStudyPlan] = useState(false);
   const [quote, setQuote] = useState("");
+  const [latestMock, setLatestMock] = useState<MockTestAttempt | null>(null);
+  const [mockAttempts, setMockAttempts] = useState<MockTestAttempt[]>([]);
 
   useEffect(() => {
     setStats(getStats());
     setSavedCount(getSavedQuestions().length);
     setHasStudyPlan(!!getStudyPlan());
     setQuote(getMotivationalQuote());
+    setLatestMock(getLatestMockScore());
+    setMockAttempts(getMockAttempts());
   }, []);
 
   const prediction = predictScore(stats);
@@ -210,58 +215,84 @@ export function DashboardOverview() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Brain className="w-5 h-5 text-violet-400" />
-              Score Prediction
+              {latestMock ? "Latest Mock Test Score" : "Score Prediction"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {prediction.confidence > 0 ? (
+            {latestMock ? (
               <div className="space-y-4">
                 <div className="text-center">
-                  <div className="text-5xl font-bold gradient-text">
-                    {prediction.predictedScore}
-                  </div>
+                  <div className="text-5xl font-bold gradient-text">{latestMock.totalScore}</div>
                   <div className="text-xs text-slate-500 mt-1">
-                    Predicted SAT Score ({prediction.confidence}% confidence)
+                    Test #{latestMock.attemptNumber} · {new Date(latestMock.completedAt).toLocaleDateString()}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-[#14B8A6]/10 rounded-xl text-center border border-[#14B8A6]/20">
+                    <div className="text-xl font-bold text-[#14B8A6]">{latestMock.rwScore}</div>
+                    <div className="text-xs text-slate-500">R&W ({latestMock.rwCorrect}/{latestMock.rwTotal})</div>
+                  </div>
                   <div className="p-3 bg-violet-500/10 rounded-xl text-center border border-violet-500/20">
-                    <div className="text-xl font-bold text-violet-400">
-                      {prediction.mathScore}
+                    <div className="text-xl font-bold text-violet-400">{latestMock.mathScore}</div>
+                    <div className="text-xs text-slate-500">Math ({latestMock.mathCorrect}/{latestMock.mathTotal})</div>
+                  </div>
+                </div>
+                {mockAttempts.length > 1 && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-slate-500">Score history:</p>
+                    <div className="flex items-end gap-1 h-10">
+                      {mockAttempts.slice(0, 8).reverse().map((a, i) => {
+                        const h = Math.max(4, ((a.totalScore - 400) / 1200) * 40);
+                        return (
+                          <div key={a.id} title={`Test #${a.attemptNumber}: ${a.totalScore}`}
+                            className="flex-1 bg-[#F59E0B]/40 hover:bg-[#F59E0B]/70 rounded-sm transition-colors cursor-default"
+                            style={{ height: `${h}px` }}
+                          />
+                        );
+                      })}
                     </div>
+                  </div>
+                )}
+                <Link href="/mock-history" className="block text-center text-xs text-slate-500 hover:text-[#F59E0B] transition-colors">View all mock tests →</Link>
+              </div>
+            ) : prediction.confidence > 0 ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="text-5xl font-bold gradient-text">{prediction.predictedScore}</div>
+                  <div className="text-xs text-slate-500 mt-1">Practice-based estimate ({prediction.confidence}% confidence)</div>
+                  <p className="text-xs text-slate-600 mt-1 italic">Take a mock test for your real score</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-violet-500/10 rounded-xl text-center border border-violet-500/20">
+                    <div className="text-xl font-bold text-violet-400">{prediction.mathScore}</div>
                     <div className="text-xs text-slate-500">Math</div>
                   </div>
                   <div className="p-3 bg-[#14B8A6]/10 rounded-xl text-center border border-[#14B8A6]/20">
-                    <div className="text-xl font-bold text-[#14B8A6]">
-                      {prediction.rwScore}
-                    </div>
-                    <div className="text-xs text-slate-500">R&amp;W</div>
+                    <div className="text-xl font-bold text-[#14B8A6]">{prediction.rwScore}</div>
+                    <div className="text-xs text-slate-500">R&W</div>
                   </div>
                 </div>
                 {prediction.weakestSkills.length > 0 && (
                   <div>
-                    <p className="text-xs text-slate-500 mb-2">
-                      Focus areas to boost score:
-                    </p>
+                    <p className="text-xs text-slate-500 mb-2">Focus areas:</p>
                     <div className="flex flex-wrap gap-1">
-                      {prediction.weakestSkills.map((s) => (
-                        <Badge key={s} variant="danger" className="text-xs">
-                          {s}
-                        </Badge>
-                      ))}
+                      {prediction.weakestSkills.map(s => <Badge key={s} variant="danger" className="text-xs">{s}</Badge>)}
                     </div>
                   </div>
                 )}
+                <Link href="/mock-test" className="block text-center text-xs text-[#F59E0B] hover:text-[#FBBF24] transition-colors font-medium">→ Take a mock test now</Link>
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-slate-400 text-sm mb-4">
-                  Practice more questions to unlock your score prediction
-                </p>
-                <Link href="/practice" className="inline-flex items-center gap-2 h-8 px-3 text-xs rounded-xl font-semibold bg-[#F59E0B] text-[#050B18] hover:bg-[#FBBF24] transition-all">
-                  <Flame className="w-4 h-4" />
-                  Start Practicing
-                </Link>
+                <p className="text-slate-400 text-sm mb-4">Complete a mock test or practice more to unlock your score estimate</p>
+                <div className="flex gap-2">
+                  <Link href="/practice" className="flex-1 inline-flex items-center justify-center gap-1 h-8 px-3 text-xs rounded-xl font-semibold bg-[#F59E0B] text-[#050B18] hover:bg-[#FBBF24] transition-all">
+                    <Flame className="w-4 h-4" />Practice
+                  </Link>
+                  <Link href="/mock-test" className="flex-1 inline-flex items-center justify-center gap-1 h-8 px-3 text-xs rounded-xl font-semibold bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10 transition-all">
+                    Mock Test
+                  </Link>
+                </div>
               </div>
             )}
           </CardContent>
@@ -334,10 +365,49 @@ export function DashboardOverview() {
         </Card>
       )}
 
+      {/* Recent sessions */}
+      {stats.sessions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Recent Practice Sessions</span>
+              <span className="text-xs font-normal text-slate-500">{stats.sessions.length} total</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {stats.sessions.slice(0, 5).map((s, i) => {
+                const acc = s.questionsAttempted > 0 ? Math.round((s.questionsCorrect / s.questionsAttempted) * 100) : 0;
+                const date = new Date(s.completedAt || s.startedAt);
+                return (
+                  <div key={s.id} className="flex items-center gap-3 p-2.5 bg-white/3 rounded-xl border border-white/8">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-[#F59E0B]/10 text-xs font-bold text-[#F59E0B]">
+                      {acc}%
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-slate-300 font-medium">
+                        {s.questionsCorrect}/{s.questionsAttempted} correct · {formatTime(s.timeSpentSeconds)}
+                      </div>
+                      <div className="text-xs text-slate-600">
+                        {date.toLocaleDateString()} · {s.domain === "math" ? "Math" : s.domain === "reading_and_writing" ? "R&W" : "Mixed"}{s.calmMode ? " · Calm" : ""}
+                      </div>
+                    </div>
+                    <Badge variant={acc >= 80 ? "success" : acc >= 60 ? "medium" : "danger"} className="text-xs flex-shrink-0">
+                      {acc >= 80 ? "Great" : acc >= 60 ? "Good" : "Keep Going"}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Quick actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           { href: "/practice", icon: Flame, label: "Practice Rush", color: "text-[#F59E0B]" },
+          { href: "/mock-test", icon: FileText, label: "Mock Test", color: "text-emerald-400" },
           { href: "/study-plan", icon: Sparkles, label: "AI Study Plan", color: "text-violet-400" },
           { href: "/calm", icon: Wind, label: "Calm Mode", color: "text-[#14B8A6]" },
           { href: "/questionbank", icon: BookMarked, label: "Question Bank", color: "text-blue-400" },
