@@ -18,6 +18,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.firelly.in'),
   title: {
     template: "%s | FirellySAT",
     default: "FirellySAT — AI-Powered SAT Prep That Calms Your Nerves",
