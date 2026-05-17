@@ -238,6 +238,27 @@ export interface LogbookEntry {
   mockAttemptId?: string;
 }
 
+export interface TestAnalysis {
+  totalScore: number | null;
+  mathScore: number | null;
+  readingWritingScore: number | null;
+  testDate: string | null;
+  weakDomains: Array<{
+    domain: string;
+    score: number | null;
+    correctRate: string | null;
+    issues: string[];
+  }>;
+  strongDomains: string[];
+  wrongQuestions: Array<{
+    questionType: string;
+    skill: string;
+    likelyError: "concept gap" | "careless" | "time pressure";
+  }>;
+  timeManagementIssues: boolean;
+  summary: string;
+}
+
 export interface MockTestAttempt {
   id: string;
   attemptNumber: number;
