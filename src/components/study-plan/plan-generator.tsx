@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Loader2, Calendar, Target, Clock, Brain, Wind, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,63 @@ const ANXIETY_LABELS: Record<number, { label: string; color: string }> = {
   4: { label: "High — Often stressed", color: "text-orange-400" },
   5: { label: "Very High — Debilitating fear", color: "text-red-400" },
 };
+
+const GENERATING_STEPS = [
+  "Analyzing your score goals...",
+  "Mapping your weak areas...",
+  "Building your weekly schedule...",
+  "Adding anxiety-reduction strategies...",
+  "Finalizing your personalized plan...",
+];
+
+function GeneratingState() {
+  const [progress, setProgress] = useState(0);
+  const [stepIndex, setStepIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress((p) => {
+        const next = p + 2;
+        if (next >= 90) { clearInterval(interval); return 90; }
+        if (next % 20 === 0) setStepIndex((i) => Math.min(i + 1, GENERATING_STEPS.length - 1));
+        return next;
+      });
+    }, 400);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[400px] gap-6">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+      >
+        <Sparkles className="w-12 h-12 text-[#F59E0B]" />
+      </motion.div>
+      <div className="text-center">
+        <h3 className="text-xl font-bold text-white mb-2">
+          Crafting your personalized plan...
+        </h3>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={stepIndex}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.3 }}
+            className="text-slate-400 text-sm max-w-sm"
+          >
+            {GENERATING_STEPS[stepIndex]}
+          </motion.p>
+        </AnimatePresence>
+      </div>
+      <div className="w-64 space-y-1">
+        <Progress value={progress} />
+        <p className="text-xs text-slate-600 text-right">{progress}%</p>
+      </div>
+    </div>
+  );
+}
 
 export function StudyPlanGenerator() {
   const [step, setStep] = useState<"form" | "generating" | "result">("form");
@@ -81,28 +138,7 @@ export function StudyPlanGenerator() {
   };
 
   if (step === "generating") {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-6">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-        >
-          <Sparkles className="w-12 h-12 text-[#F59E0B]" />
-        </motion.div>
-        <div className="text-center">
-          <h3 className="text-xl font-bold text-white mb-2">
-            Crafting your personalized plan...
-          </h3>
-          <p className="text-slate-400 text-sm max-w-sm">
-            Our AI is analyzing your profile and building a week-by-week study
-            schedule tailored just for you.
-          </p>
-        </div>
-        <div className="w-48">
-          <Progress value={undefined} className="animate-pulse" />
-        </div>
-      </div>
-    );
+    return <GeneratingState />;
   }
 
   if (step === "result" && plan) {
