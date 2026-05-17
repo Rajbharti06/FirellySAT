@@ -10,7 +10,7 @@ const HF_API_KEY = process.env.HF_API_KEY;
 const HF_API_BASE = process.env.HF_API_BASE || "https://router.huggingface.co/hf-inference/v1";
 const HF_MODEL = process.env.HF_STUDY_PLAN_MODEL || "Qwen/Qwen3-235B-A22B";
 
-const AI_TIMEOUT_MS = 55000;
+const AI_TIMEOUT_MS = 25000;
 
 function withTimeout(ms: number): AbortController {
   const controller = new AbortController();
@@ -41,70 +41,67 @@ Official free resources (always reference these):
 - College Board Bluebook app for full digital practice tests`;
 
 async function callAI(systemPrompt: string, userPrompt: string): Promise<string | null> {
+  type RequestEntry = { controller: AbortController; promise: Promise<string | null> };
+  const requests: RequestEntry[] = [];
+
+  const addRequest = (url: string, key: string, model: string, sysPrefix = "") => {
+    const controller = withTimeout(AI_TIMEOUT_MS);
+    const promise = fetch(url, {
+      method: "POST",
+      signal: controller.signal,
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: sysPrefix + systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        max_tokens: 3000,
+        temperature: 0.3,
+        stream: false,
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        const data = await res.json();
+        return (data.choices?.[0]?.message?.content as string) ?? null;
+      })
+      .catch(() => null);
+    requests.push({ controller, promise });
+  };
+
   if (NVIDIA_API_KEY) {
-    const controller = withTimeout(AI_TIMEOUT_MS);
-    try {
-      const res = await fetch(`${NVIDIA_API_BASE}/chat/completions`, {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          Authorization: `Bearer ${NVIDIA_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: NVIDIA_MODEL,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          max_tokens: 4096,
-          temperature: 0.3,
-          stream: false,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const content = data.choices?.[0]?.message?.content;
-        if (content) return content;
-      }
-    } catch (e) {
-      console.error("NVIDIA API failed:", e);
-    }
+    addRequest(`${NVIDIA_API_BASE}/chat/completions`, NVIDIA_API_KEY, NVIDIA_MODEL);
   }
-
   if (HF_API_KEY) {
-    const controller = withTimeout(AI_TIMEOUT_MS);
     // Prefix /no_think for Qwen3 so thinking tokens don't consume output budget
-    const noThinkPrefix = HF_MODEL.includes("Qwen3") ? "/no_think\n\n" : "";
-    try {
-      const res = await fetch(`${HF_API_BASE}/chat/completions`, {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          Authorization: `Bearer ${HF_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: HF_MODEL,
-          messages: [
-            { role: "system", content: noThinkPrefix + systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          max_tokens: 4096,
-          temperature: 0.3,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const content = data.choices?.[0]?.message?.content;
-        if (content) return content;
-      }
-    } catch (e) {
-      console.error("HF API failed:", e);
-    }
+    const prefix = HF_MODEL.includes("Qwen3") ? "/no_think\n\n" : "";
+    addRequest(`${HF_API_BASE}/chat/completions`, HF_API_KEY, HF_MODEL, prefix);
   }
 
-  return null;
+  if (requests.length === 0) return null;
+
+  // Race all providers — first valid response wins, losers get aborted
+  return new Promise<string | null>((resolve) => {
+    let settled = 0;
+    let won = false;
+    const total = requests.length;
+    const cancelAll = () =>
+      requests.forEach(({ controller }) => { try { controller.abort(); } catch { /* ignore */ } });
+
+    for (const { promise } of requests) {
+      promise.then((result) => {
+        settled++;
+        if (!won && result) {
+          won = true;
+          cancelAll();
+          resolve(result);
+        } else if (settled === total && !won) {
+          resolve(null);
+        }
+      });
+    }
+  });
 }
 
 export async function POST(req: NextRequest) {

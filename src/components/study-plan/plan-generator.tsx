@@ -44,12 +44,12 @@ function GeneratingState() {
   useEffect(() => {
     const interval = setInterval(() => {
       setProgress((p) => {
-        const next = p + 2;
+        const next = p + 3;
         if (next >= 90) { clearInterval(interval); return 90; }
-        if (next % 20 === 0) setStepIndex((i) => Math.min(i + 1, GENERATING_STEPS.length - 1));
+        if (next % 18 === 0) setStepIndex((i) => Math.min(i + 1, GENERATING_STEPS.length - 1));
         return next;
       });
-    }, 400);
+    }, 300);
     return () => clearInterval(interval);
   }, []);
 
