@@ -63,7 +63,7 @@ export function Navbar() {
                   "px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200",
                   pathname === href || pathname.startsWith(href + "/")
                     ? "text-[#F59E0B] bg-[#F59E0B]/10"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                    : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--secondary)]"
                 )}
               >
                 {label}
@@ -75,7 +75,7 @@ export function Navbar() {
           <div className="hidden lg:flex items-center gap-2">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+              className="p-2 rounded-xl border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--secondary)] transition-all"
               title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -124,7 +124,7 @@ export function Navbar() {
                     "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                     pathname === href
                       ? "text-[#F59E0B] bg-[#F59E0B]/10"
-                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--secondary)]"
                   )}
                 >
                   <Icon className="w-4 h-4" />

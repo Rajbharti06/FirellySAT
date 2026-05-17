@@ -79,59 +79,189 @@
   --danger: #EF4444;
 }
 
-/* Light theme override */
+/* ═══════════════════════════════════════════════════════════════════
+   LIGHT THEME — CSS variables + comprehensive Tailwind class overrides
+   Uses [class*="..."] attribute substring matching to override hardcoded
+   Tailwind arbitrary values without rewriting every component.
+   ═══════════════════════════════════════════════════════════════════ */
+
 [data-theme="light"] {
-  --background: #FFFFFF;
+  --background: #F8FAFC;
   --foreground: #0F172A;
-  --card: #F8FAFC;
+  --card: #FFFFFF;
   --card-foreground: #0F172A;
   --popover: #FFFFFF;
   --popover-foreground: #0F172A;
-  --primary: #2563EB;
-  --primary-foreground: #FFFFFF;
+  --primary: #F59E0B;
+  --primary-foreground: #0F172A;
   --secondary: #F1F5F9;
   --secondary-foreground: #334155;
   --muted: #E2E8F0;
   --muted-foreground: #64748B;
   --accent: #EFF6FF;
   --accent-foreground: #1E40AF;
-  --border: rgba(0, 0, 0, 0.08);
-  --input: rgba(0, 0, 0, 0.04);
-  --ring: #2563EB;
+  --border: rgba(0, 0, 0, 0.10);
+  --input: rgba(0, 0, 0, 0.06);
+  --ring: #F59E0B;
   --calm: #0D9488;
   --success: #059669;
   --warning: #D97706;
   --danger: #DC2626;
 }
 
+/* ── 1. Body / page ── */
 [data-theme="light"] body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: #F8FAFC;
+  color: #0F172A;
 }
 
+/* ── 2. Kill hardcoded dark page backgrounds ── */
+[data-theme="light"] [class*="bg-[#050B18]"] { background-color: #F8FAFC !important; background-image: none !important; }
+[data-theme="light"] [class*="bg-[#050F1E]"] { background-color: #F1F5F9 !important; background-image: none !important; }
+[data-theme="light"] [class*="bg-[#0A1428]"] { background-color: #FFFFFF !important; }
+[data-theme="light"] [class*="bg-[#0F1B35]"] { background-color: #F8FAFC !important; }
+[data-theme="light"] [class*="bg-[#142342]"] { background-color: #F1F5F9 !important; }
+[data-theme="light"] [class*="bg-[#1A2C52]"] { background-color: #E8EFF5 !important; }
+
+/* ── 3. Kill dark gradient backgrounds ── */
+[data-theme="light"] [class*="from-[#050B18]"] {
+  background: linear-gradient(to bottom, #F8FAFC, #EEF2F7) !important;
+}
+[data-theme="light"] [class*="via-[#050F1E]"],
+[data-theme="light"] [class*="via-[#050B18]"] {
+  background: linear-gradient(to bottom, #F8FAFC, #EEF2F7) !important;
+}
+/* Specific gradient class */
+[data-theme="light"] .bg-gradient-to-b {
+  background-image: linear-gradient(to bottom, #F8FAFC, #F1F5F9) !important;
+}
+
+/* ── 4. Transparent white overlays → proper light surfaces ── */
+[data-theme="light"] [class*="bg-white/3"]  { background-color: rgba(0,0,0,0.030) !important; }
+[data-theme="light"] [class*="bg-white/4"]  { background-color: rgba(0,0,0,0.040) !important; }
+[data-theme="light"] [class*="bg-white/5"]  { background-color: rgba(0,0,0,0.050) !important; }
+[data-theme="light"] [class*="bg-white/6"]  { background-color: rgba(0,0,0,0.050) !important; }
+[data-theme="light"] [class*="bg-white/8"]  { background-color: rgba(0,0,0,0.060) !important; }
+[data-theme="light"] [class*="bg-white/10"] { background-color: rgba(0,0,0,0.070) !important; }
+[data-theme="light"] [class*="bg-white/12"] { background-color: rgba(0,0,0,0.080) !important; }
+
+/* ── 5. Text colors ── */
+[data-theme="light"] .text-white        { color: #0F172A !important; }
+[data-theme="light"] .text-slate-50     { color: #1E293B !important; }
+[data-theme="light"] .text-slate-100    { color: #1E293B !important; }
+[data-theme="light"] .text-slate-200    { color: #334155 !important; }
+[data-theme="light"] .text-slate-300    { color: #475569 !important; }
+[data-theme="light"] .text-slate-400    { color: #64748B !important; }
+[data-theme="light"] .text-slate-500    { color: #94A3B8 !important; }
+[data-theme="light"] .text-slate-600    { color: #B0BFCC !important; }
+[data-theme="light"] .hover\:text-white:hover { color: #0F172A !important; }
+
+/* ── 6. Border colors ── */
+[data-theme="light"] [class*="border-white/5"]  { border-color: rgba(0,0,0,0.06) !important; }
+[data-theme="light"] [class*="border-white/8"]  { border-color: rgba(0,0,0,0.09) !important; }
+[data-theme="light"] [class*="border-white/10"] { border-color: rgba(0,0,0,0.10) !important; }
+[data-theme="light"] [class*="border-white/12"] { border-color: rgba(0,0,0,0.12) !important; }
+[data-theme="light"] [class*="border-white/15"] { border-color: rgba(0,0,0,0.14) !important; }
+[data-theme="light"] [class*="border-white/20"] { border-color: rgba(0,0,0,0.16) !important; }
+[data-theme="light"] [class*="border-white/25"] { border-color: rgba(0,0,0,0.18) !important; }
+
+/* ── 7. Hover surface states ── */
+[data-theme="light"] [class*="hover:bg-white/5"]:hover  { background-color: rgba(0,0,0,0.04) !important; }
+[data-theme="light"] [class*="hover:bg-white/6"]:hover  { background-color: rgba(0,0,0,0.05) !important; }
+[data-theme="light"] [class*="hover:bg-white/10"]:hover { background-color: rgba(0,0,0,0.06) !important; }
+[data-theme="light"] [class*="hover:border-white/15"]:hover { border-color: rgba(0,0,0,0.14) !important; }
+[data-theme="light"] [class*="hover:border-white/20"]:hover { border-color: rgba(0,0,0,0.16) !important; }
+
+/* ── 8. Navbar ── */
+[data-theme="light"] header nav {
+  background: rgba(248, 250, 252, 0.92) !important;
+  backdrop-filter: blur(20px);
+}
+[data-theme="light"] header .glass {
+  background: rgba(255,255,255,0.85) !important;
+  border-color: rgba(0,0,0,0.08) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
+}
+
+/* ── 9. Footer ── */
+[data-theme="light"] footer {
+  background-color: #F1F5F9 !important;
+  border-top-color: rgba(0,0,0,0.08) !important;
+}
+
+/* ── 10. Cards — give proper shadows in light mode ── */
+[data-theme="light"] [class*="bg-[#0A1428]"],
+[data-theme="light"] [class*="bg-[#0F1B35]"] {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+/* ── 11. Glass in light mode ── */
 [data-theme="light"] .glass {
-  background: rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255,255,255,0.80) !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06) !important;
 }
-
 [data-theme="light"] .glass-strong {
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255,255,255,0.92) !important;
+  border: 1px solid rgba(0,0,0,0.10) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
 }
 
-[data-theme="light"] ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-}
+/* ── 12. Scrollbar ── */
+[data-theme="light"] ::-webkit-scrollbar-track { background: #F1F5F9; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.14); }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.22); }
 
+/* ── 13. Input fields ── */
+[data-theme="light"] input:not([type="range"]),
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background-color: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder { color: #94A3B8 !important; }
+
+/* ── 14. Question content in light mode ── */
 [data-theme="light"] .question-content strong,
-[data-theme="light"] .question-content b { color: #0F172A; }
+[data-theme="light"] .question-content b { color: #0F172A !important; }
 [data-theme="light"] .question-content em,
-[data-theme="light"] .question-content i { color: #2563EB; }
-[data-theme="light"] .question-content th { background: #E2E8F0; color: #0F172A; }
-[data-theme="light"] .question-content td { color: #334155; }
+[data-theme="light"] .question-content i { color: #2563EB !important; }
+[data-theme="light"] .question-content th { background: #E2E8F0 !important; color: #0F172A !important; }
+[data-theme="light"] .question-content td { color: #334155 !important; }
 [data-theme="light"] .question-content th,
-[data-theme="light"] .question-content td { border-color: rgba(0,0,0,0.12); }
-[data-theme="light"] .question-content blockquote { border-left-color: rgba(37,99,235,0.4); color: #475569; }
+[data-theme="light"] .question-content td { border-color: rgba(0,0,0,0.12) !important; }
+[data-theme="light"] .question-content blockquote { border-left-color: rgba(37,99,235,0.4) !important; color: #475569 !important; }
+
+/* ── 15. Gradient text — keep amber, looks great on light bg ── */
+[data-theme="light"] .gradient-text {
+  background: linear-gradient(135deg, #D97706, #F59E0B, #FBBF24) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ── 16. Shimmer in light mode ── */
+[data-theme="light"] .shimmer {
+  background: linear-gradient(90deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0.02) 100%) !important;
+}
+
+/* ── 17. Progress bars ── */
+[data-theme="light"] [class*="bg-white/8"][role="progressbar"],
+[data-theme="light"] .progress-track { background-color: #E2E8F0 !important; }
+
+/* ── 18. Specific component background patches ── */
+/* Amber/F59E0B accent items stay amber — good on both themes */
+/* Teal/14B8A6 calm items stay teal — good on both themes */
+/* Violet accent items stay violet — good on both themes */
+
+/* Dark backgrounds for specific components that should be card-white in light */
+[data-theme="light"] [class*="bg-[#050B18]/95"],
+[data-theme="light"] [class*="bg-[#050B18]/90"] { background-color: rgba(255,255,255,0.95) !important; }
+
+/* ── 19. Ring color ── */
+[data-theme="light"] :focus-visible { outline-color: #F59E0B; }
 
 /* Exam mode — always white like Bluebook */
 .exam-mode {

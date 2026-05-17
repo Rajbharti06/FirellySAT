@@ -7,12 +7,12 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[#0A1428] border-white/8",
+        default: "bg-[var(--card)] border-[var(--border)]",
         glass: "glass",
-        glow: "bg-[#0A1428] border-[#F59E0B]/20 shadow-[0_0_20px_rgba(245,158,11,0.08)]",
-        calm: "bg-[#0A1428] border-[#14B8A6]/20 shadow-[0_0_20px_rgba(20,184,166,0.08)]",
-        violet: "bg-[#0A1428] border-[#8B5CF6]/20 shadow-[0_0_20px_rgba(139,92,246,0.08)]",
-        flat: "bg-[#0F1B35] border-white/5",
+        glow: "bg-[var(--card)] border-[#F59E0B]/20 shadow-[0_0_20px_rgba(245,158,11,0.08)]",
+        calm: "bg-[var(--card)] border-[#14B8A6]/20 shadow-[0_0_20px_rgba(20,184,166,0.08)]",
+        violet: "bg-[var(--card)] border-[#8B5CF6]/20 shadow-[0_0_20px_rgba(139,92,246,0.08)]",
+        flat: "bg-[var(--card)] border-[var(--border)]",
       },
     },
     defaultVariants: {
@@ -41,14 +41,14 @@ CardHeader.displayName = "CardHeader";
 
 const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn("text-lg font-bold text-white", className)} {...props} />
+    <h3 ref={ref} className={cn("text-lg font-bold text-[var(--card-foreground)]", className)} {...props} />
   )
 );
 CardTitle.displayName = "CardTitle";
 
 const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
   ({ className, ...props }, ref) => (
-    <p ref={ref} className={cn("text-sm text-slate-400", className)} {...props} />
+    <p ref={ref} className={cn("text-sm text-[var(--muted-foreground)]", className)} {...props} />
   )
 );
 CardDescription.displayName = "CardDescription";
