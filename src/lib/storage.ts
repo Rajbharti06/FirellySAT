@@ -12,6 +12,8 @@ import type {
   NoteQuestion,
   LogbookEntry,
   MockTestAttempt,
+  Folder,
+  NoteSnapshot,
 } from "@/types";
 import { generateId } from "./utils";
 
@@ -370,6 +372,63 @@ export function saveMockAttempt(attempt: MockTestAttempt): void {
 export function getLatestMockScore(): MockTestAttempt | null {
   const attempts = getMockAttempts();
   return attempts.length > 0 ? attempts[0] : null;
+}
+
+// ─── Folders ──────────────────────────────────────────────────────────────────
+
+export function getFolders(): Folder[] {
+  return safeGet<Folder[]>("firellysat_folders", []);
+}
+
+export function saveFolder(folder: Folder): void {
+  const folders = getFolders();
+  const idx = folders.findIndex((f) => f.id === folder.id);
+  if (idx >= 0) { folders[idx] = folder; } else { folders.unshift(folder); }
+  safeSet("firellysat_folders", folders);
+}
+
+export function deleteFolder(folderId: string): void {
+  const notes = getNotes();
+  for (const n of notes) {
+    if (n.folderId === folderId) {
+      saveNote({ ...n, folderId: undefined });
+    }
+  }
+  safeSet("firellysat_folders", getFolders().filter((f) => f.id !== folderId));
+}
+
+export function createFolder(partial: Partial<Folder> = {}): Folder {
+  const folder: Folder = {
+    id: generateId(),
+    name: "New Folder",
+    emoji: "📁",
+    color: "slate",
+    createdAt: new Date().toISOString(),
+    ...partial,
+  };
+  saveFolder(folder);
+  return folder;
+}
+
+// ─── Note Snapshots ───────────────────────────────────────────────────────────
+
+export function getNoteSnapshots(): NoteSnapshot[] {
+  return safeGet<NoteSnapshot[]>("firellysat_note_snapshots", []);
+}
+
+export function saveNoteSnapshot(snapshot: NoteSnapshot): void {
+  const snapshots = getNoteSnapshots();
+  const idx = snapshots.findIndex((s) => s.id === snapshot.id);
+  if (idx >= 0) { snapshots[idx] = snapshot; } else { snapshots.unshift(snapshot); }
+  safeSet("firellysat_note_snapshots", snapshots);
+}
+
+export function deleteNoteSnapshot(snapshotId: string): void {
+  safeSet("firellysat_note_snapshots", getNoteSnapshots().filter((s) => s.id !== snapshotId));
+}
+
+export function getSnapshotsForNote(noteId: string): NoteSnapshot[] {
+  return getNoteSnapshots().filter((s) => s.noteId === noteId);
 }
 
 // ─── Mock Test Question Deduplication ─────────────────────────────────────────

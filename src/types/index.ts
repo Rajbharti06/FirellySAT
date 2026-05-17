@@ -184,6 +184,31 @@ export interface Note {
   savedQuestionIds: string[];
   color: "default" | "amber" | "teal" | "violet" | "rose";
   tags: string[];
+  folderId?: string;
+  pinned?: boolean;
+  status?: "draft" | "review" | "mastered";
+  snapshotIds?: string[];
+}
+
+export interface Folder {
+  id: string;
+  name: string;
+  emoji: string;
+  color: "amber" | "teal" | "violet" | "rose" | "blue" | "slate";
+  createdAt: string;
+}
+
+export interface NoteSnapshot {
+  id: string;
+  noteId: string;
+  questionId: string;
+  stem: string;
+  skill: string;
+  domain: QuestionDomain;
+  difficulty: QuestionDifficulty;
+  correctAnswer: string[];
+  rationale?: string;
+  takenAt: string;
 }
 
 export interface NoteQuestion {
