@@ -386,6 +386,16 @@ function NotesTab() {
 
 // ─── Logbook Tab ──────────────────────────────────────────────────────────────
 
+interface AIExplanation {
+  concept: string;
+  stepByStep: string[];
+  whyCorrect: string;
+  whyStudentWasWrong: string;
+  commonMistake: string;
+  memoryTip: string;
+  relatedConcepts: string[];
+}
+
 function LogbookTab() {
   const [entries, setEntries] = useState<LogbookEntry[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -394,8 +404,33 @@ function LogbookTab() {
   const [sourceFilter, setSourceFilter] = useState<"all" | "practice" | "mock_test">("all");
   const [search, setSearch] = useState("");
   const [confirmClear, setConfirmClear] = useState(false);
+  const [aiExplanations, setAiExplanations] = useState<Map<string, AIExplanation | "loading" | "error">>(new Map());
 
   useEffect(() => { setEntries(getLogbook()); }, []);
+
+  const fetchExplanation = async (entry: LogbookEntry) => {
+    if (aiExplanations.has(entry.id)) return;
+    setAiExplanations(prev => new Map(prev).set(entry.id, "loading"));
+    try {
+      const res = await fetch("/api/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stem: entry.stem,
+          correctAnswer: entry.correctAnswer,
+          userAnswer: entry.userAnswer,
+          skill: entry.skill,
+          domain: entry.domain,
+          rationale: entry.rationale,
+        }),
+      });
+      if (!res.ok) throw new Error("API error");
+      const data = await res.json();
+      setAiExplanations(prev => new Map(prev).set(entry.id, data.explanation));
+    } catch {
+      setAiExplanations(prev => new Map(prev).set(entry.id, "error"));
+    }
+  };
 
   const filtered = entries.filter((e) => {
     if (domainFilter !== "all" && e.domain !== domainFilter) return false;
@@ -589,13 +624,109 @@ function LogbookTab() {
                                 <div className="p-3 bg-[#F59E0B]/6 border border-[#F59E0B]/20 rounded-xl">
                                   <div className="flex items-center gap-1.5 mb-2">
                                     <Lightbulb className="w-3.5 h-3.5 text-[#F59E0B]" />
-                                    <span className="text-xs font-semibold text-[#F59E0B]">Explanation</span>
+                                    <span className="text-xs font-semibold text-[#F59E0B]">Official Explanation</span>
                                   </div>
                                   <MathJax>
                                     <div className="text-xs text-slate-300 leading-relaxed question-content" dangerouslySetInnerHTML={{ __html: entry.rationale }} />
                                   </MathJax>
                                 </div>
                               )}
+
+                              {/* AI Deep Explanation */}
+                              {!aiExplanations.has(entry.id) && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); fetchExplanation(entry); }}
+                                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-500/10 border border-violet-500/25 text-violet-400 text-xs font-semibold hover:bg-violet-500/20 transition-all"
+                                >
+                                  <Zap className="w-3.5 h-3.5" />
+                                  AI Deep Explain — Why did I get this wrong?
+                                </button>
+                              )}
+
+                              {aiExplanations.get(entry.id) === "loading" && (
+                                <div className="p-3 bg-violet-500/5 border border-violet-500/20 rounded-xl flex items-center gap-2 text-xs text-violet-400">
+                                  <div className="w-3.5 h-3.5 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
+                                  Generating deep analysis…
+                                </div>
+                              )}
+
+                              {aiExplanations.get(entry.id) === "error" && (
+                                <div className="p-3 bg-red-500/5 border border-red-500/20 rounded-xl text-xs text-red-400">
+                                  Failed to generate explanation. Check your API connection.
+                                  <button onClick={(e) => { e.stopPropagation(); setAiExplanations(prev => { const n = new Map(prev); n.delete(entry.id); return n; }); }} className="ml-2 underline">Retry</button>
+                                </div>
+                              )}
+
+                              {(() => {
+                                const exp = aiExplanations.get(entry.id);
+                                if (!exp || exp === "loading" || exp === "error") return null;
+                                const explanation = exp as AIExplanation;
+                                return (
+                                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-violet-400 uppercase tracking-wide">
+                                      <Zap className="w-3.5 h-3.5" /> AI Deep Analysis
+                                    </div>
+
+                                    {explanation.concept && (
+                                      <div className="p-3 bg-blue-500/8 border border-blue-500/20 rounded-xl">
+                                        <p className="text-xs font-semibold text-blue-400 mb-1">Core Concept</p>
+                                        <p className="text-xs text-slate-300 leading-relaxed">{explanation.concept}</p>
+                                      </div>
+                                    )}
+
+                                    {explanation.stepByStep && explanation.stepByStep.length > 0 && (
+                                      <div className="p-3 bg-white/3 border border-white/8 rounded-xl">
+                                        <p className="text-xs font-semibold text-slate-300 mb-2">Step-by-Step Solution</p>
+                                        <ol className="space-y-1.5">
+                                          {explanation.stepByStep.map((step, si) => (
+                                            <li key={si} className="flex gap-2 text-xs text-slate-300">
+                                              <span className="flex-shrink-0 w-4 h-4 rounded-full bg-violet-500/20 text-violet-400 text-[10px] font-bold flex items-center justify-center mt-0.5">{si + 1}</span>
+                                              <span className="leading-relaxed">{step}</span>
+                                            </li>
+                                          ))}
+                                        </ol>
+                                      </div>
+                                    )}
+
+                                    {explanation.whyStudentWasWrong && (
+                                      <div className="p-3 bg-red-500/6 border border-red-500/20 rounded-xl">
+                                        <p className="text-xs font-semibold text-red-400 mb-1">Why You Chose the Wrong Answer</p>
+                                        <p className="text-xs text-slate-300 leading-relaxed">{explanation.whyStudentWasWrong}</p>
+                                      </div>
+                                    )}
+
+                                    {explanation.whyCorrect && (
+                                      <div className="p-3 bg-emerald-500/6 border border-emerald-500/20 rounded-xl">
+                                        <p className="text-xs font-semibold text-emerald-400 mb-1">Why the Correct Answer Works</p>
+                                        <p className="text-xs text-slate-300 leading-relaxed">{explanation.whyCorrect}</p>
+                                      </div>
+                                    )}
+
+                                    {explanation.commonMistake && (
+                                      <div className="p-3 bg-amber-500/6 border border-amber-500/20 rounded-xl">
+                                        <p className="text-xs font-semibold text-amber-400 mb-1">Common Mistake to Avoid</p>
+                                        <p className="text-xs text-slate-300 leading-relaxed">{explanation.commonMistake}</p>
+                                      </div>
+                                    )}
+
+                                    {explanation.memoryTip && (
+                                      <div className="p-3 bg-[#14B8A6]/8 border border-[#14B8A6]/25 rounded-xl">
+                                        <p className="text-xs font-semibold text-[#14B8A6] mb-1">Memory Tip</p>
+                                        <p className="text-xs text-slate-300 leading-relaxed">💡 {explanation.memoryTip}</p>
+                                      </div>
+                                    )}
+
+                                    {explanation.relatedConcepts && explanation.relatedConcepts.length > 0 && (
+                                      <div className="flex flex-wrap gap-1.5">
+                                        <span className="text-xs text-slate-500">Related:</span>
+                                        {explanation.relatedConcepts.map((c, ci) => (
+                                          <Badge key={ci} variant="secondary" className="text-xs">{c}</Badge>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </motion.div>
+                                );
+                              })()}
 
                               <p className="text-xs text-slate-600 flex items-center gap-1">
                                 <Clock className="w-3 h-3" />{formatDate(entry.timestamp)} · {entry.source === "mock_test" ? "Mock Test" : "Practice Session"}

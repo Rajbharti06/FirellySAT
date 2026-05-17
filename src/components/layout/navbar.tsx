@@ -6,10 +6,11 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Menu, X, Flame, BookOpen, LayoutDashboard,
-  Sparkles, BookMarked, Wind, FileText
+  Sparkles, BookMarked, Wind, FileText, Sun, Moon
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/context/ThemeContext";
 
 const navLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -23,6 +24,7 @@ const navLinks = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -71,6 +73,13 @@ export function Navbar() {
 
           {/* Desktop CTAs — plain links with button styling */}
           <div className="hidden lg:flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <Link
               href="/questionbank"
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold border border-[#F59E0B]/40 text-[#F59E0B] hover:bg-[#F59E0B]/10 hover:border-[#F59E0B] transition-all"

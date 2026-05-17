@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "sonner";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -63,6 +64,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="font-sans antialiased">
+          <ThemeProvider>
           <Navbar />
           <main>{children}</main>
           <Footer />
@@ -76,6 +78,7 @@ export default function RootLayout({
               },
             }}
           />
+          </ThemeProvider>
       </body>
     </html>
   );

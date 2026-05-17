@@ -6,7 +6,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Flame, Settings2, Wind, Calculator, BookOpen, Zap, X,
-  ChevronDown, ChevronUp, Target, TrendingUp
+  Target, TrendingUp, CheckSquare, Square, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,17 +19,87 @@ import type { Question, QuestionDomain, QuestionDifficulty } from "@/types";
 type PracticeMode = "idle" | "loading" | "active";
 
 const MATH_SKILLS = [
-  { skill: "Algebra", subtopics: ["Linear equations", "Linear functions", "Systems of equations", "Linear inequalities"] },
-  { skill: "Advanced Math", subtopics: ["Quadratic equations", "Polynomials", "Exponential functions", "Radical & rational expressions"] },
-  { skill: "Problem-Solving and Data Analysis", subtopics: ["Ratios & rates", "Percentages", "Statistics & data", "Probability"] },
-  { skill: "Geometry and Trigonometry", subtopics: ["Lines & angles", "Triangles", "Circles", "Volume & surface area", "Trigonometry"] },
+  {
+    skill: "Algebra",
+    icon: "📊",
+    subtopics: [
+      "Linear equations in one variable",
+      "Linear functions",
+      "Linear equations in two variables",
+      "Systems of two linear equations in two variables",
+      "Linear inequalities in one or two variables",
+    ],
+  },
+  {
+    skill: "Advanced Math",
+    icon: "🧮",
+    subtopics: [
+      "Nonlinear functions",
+      "Nonlinear equations in one variable and systems of equations in two variables",
+      "Equivalent expressions",
+    ],
+  },
+  {
+    skill: "Problem-Solving and Data Analysis",
+    icon: "📈",
+    subtopics: [
+      "Ratios, rates, proportional relationships, and units",
+      "Percentages",
+      "One-variable data: Distributions and measures of center and spread",
+      "Two-variable data: Models and scatterplots",
+      "Probability and conditional probability",
+      "Inference from sample statistics and margin of error",
+      "Evaluating statistical claims: Observational studies and experiments",
+    ],
+  },
+  {
+    skill: "Geometry and Trigonometry",
+    icon: "📐",
+    subtopics: [
+      "Area and volume",
+      "Lines, angles, and triangles",
+      "Right triangles and trigonometry",
+      "Circles",
+    ],
+  },
 ];
 
 const RW_SKILLS = [
-  { skill: "Information and Ideas", subtopics: ["Main idea & details", "Command of evidence", "Inferences"] },
-  { skill: "Craft and Structure", subtopics: ["Words in context", "Text structure & purpose", "Cross-text connections"] },
-  { skill: "Expression of Ideas", subtopics: ["Rhetorical synthesis", "Transitions"] },
-  { skill: "Standard English Conventions", subtopics: ["Subject-verb agreement", "Punctuation", "Sentence boundaries", "Pronoun usage", "Parallel structure"] },
+  {
+    skill: "Information and Ideas",
+    icon: "💡",
+    subtopics: [
+      "Central Ideas and Details",
+      "Command of Evidence (Textual)",
+      "Command of Evidence (Quantitative)",
+      "Inferences",
+    ],
+  },
+  {
+    skill: "Craft and Structure",
+    icon: "🔤",
+    subtopics: [
+      "Words in Context",
+      "Text Structure and Purpose",
+      "Cross-Text Connections",
+    ],
+  },
+  {
+    skill: "Expression of Ideas",
+    icon: "✍️",
+    subtopics: [
+      "Rhetorical Synthesis",
+      "Transitions",
+    ],
+  },
+  {
+    skill: "Standard English Conventions",
+    icon: "📝",
+    subtopics: [
+      "Boundaries",
+      "Form, Structure, and Sense",
+    ],
+  },
 ];
 
 export default function PracticePage() {
@@ -40,8 +110,8 @@ export default function PracticePage() {
   const [domain, setDomain] = useState<QuestionDomain | "mixed">("mixed");
   const [difficulty, setDifficulty] = useState<QuestionDifficulty | "mixed">("mixed");
   const [count, setCount] = useState(10);
-  const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
-  const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(null);
+  const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
+  const [expandedSkills, setExpandedSkills] = useState<Set<string>>(new Set());
   const [showTopicFilter, setShowTopicFilter] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,45 +122,92 @@ export default function PracticePage() {
     setDifficulty(settings.preferredDifficulty);
   }, []);
 
-  // Reset skill when domain changes
   useEffect(() => {
-    setSelectedSkill(null);
-    setSelectedSubtopic(null);
+    setSelectedTopics(new Set());
+    setExpandedSkills(new Set());
   }, [domain]);
 
-  // Reset subtopic when skill changes
-  useEffect(() => {
-    setSelectedSubtopic(null);
-  }, [selectedSkill]);
+  const availableSkillGroups = domain === "math"
+    ? MATH_SKILLS
+    : domain === "reading_and_writing"
+    ? RW_SKILLS
+    : [...MATH_SKILLS, ...RW_SKILLS];
 
-  const availableSkills =
-    domain === "math" ? MATH_SKILLS :
-    domain === "reading_and_writing" ? RW_SKILLS :
-    [...MATH_SKILLS, ...RW_SKILLS];
+  const toggleTopic = (topic: string) => {
+    setSelectedTopics(prev => {
+      const next = new Set(prev);
+      if (next.has(topic)) next.delete(topic); else next.add(topic);
+      return next;
+    });
+  };
 
-  const selectedSkillData = availableSkills.find((s) => s.skill === selectedSkill);
+  const toggleSkillGroup = (skill: string) => {
+    const group = availableSkillGroups.find(g => g.skill === skill);
+    if (!group) return;
+    const allSelected = group.subtopics.every(s => selectedTopics.has(s));
+    setSelectedTopics(prev => {
+      const next = new Set(prev);
+      if (allSelected) {
+        group.subtopics.forEach(s => next.delete(s));
+        next.delete(skill);
+      } else {
+        group.subtopics.forEach(s => next.add(s));
+      }
+      return next;
+    });
+  };
+
+  const selectAllTopics = () => {
+    const all = new Set<string>();
+    availableSkillGroups.forEach(g => g.subtopics.forEach(s => all.add(s)));
+    setSelectedTopics(all);
+  };
+
+  const clearAllTopics = () => setSelectedTopics(new Set());
+
+  const toggleSkillExpand = (skill: string) => {
+    setExpandedSkills(prev => {
+      const next = new Set(prev);
+      if (next.has(skill)) next.delete(skill); else next.add(skill);
+      return next;
+    });
+  };
 
   const startPractice = async () => {
     setMode("loading");
     setError(null);
 
     try {
-      // For adaptive mode, fetch a larger pool of mixed-difficulty questions
       const fetchCount = isAdaptive ? 60 : count;
       const params = new URLSearchParams({ count: String(fetchCount) });
       if (domain !== "mixed") params.set("domain", domain);
       if (!isAdaptive && difficulty !== "mixed") params.set("difficulty", difficulty);
-      if (selectedSkill) params.set("skill", selectedSubtopic || selectedSkill);
+
+      // For multi-topic: use the first selected topic for initial fetch (server-side),
+      // then filter client-side for multiple topics
+      if (selectedTopics.size === 1) {
+        params.set("skill", Array.from(selectedTopics)[0]);
+      }
 
       const res = await fetch(`/api/questions?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load questions");
 
       const data = await res.json();
-      if (!data.questions || data.questions.length === 0) {
-        throw new Error("No questions found for these filters. Try broadening your selection.");
+      let qs: Question[] = data.questions || [];
+
+      if (qs.length === 0) throw new Error("No questions found. Try broadening your selection.");
+
+      // Client-side multi-topic filter
+      if (selectedTopics.size > 1) {
+        const filtered = qs.filter(q =>
+          Array.from(selectedTopics).some(t =>
+            q.skill?.toLowerCase().includes(t.toLowerCase()) || t.toLowerCase().includes(q.skill?.toLowerCase() || "")
+          )
+        );
+        if (filtered.length > 0) qs = filtered;
       }
 
-      setQuestions(data.questions);
+      setQuestions(qs);
       setMode("active");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start practice");
@@ -118,9 +235,7 @@ export default function PracticePage() {
             <Flame className="w-8 h-8 text-[#F59E0B]" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Practice Rush</h1>
-          <p className="text-slate-400">
-            Target any topic or go broad. Real SAT-style questions, instant feedback.
-          </p>
+          <p className="text-slate-400">Target any topic or go broad. Real SAT-style questions, instant feedback.</p>
         </motion.div>
 
         {error && (
@@ -220,10 +335,7 @@ export default function PracticePage() {
                 onClick={() => setCalmMode(!calmMode)}
                 className={cn("w-11 h-6 rounded-full transition-all duration-200 relative", calmMode ? "bg-[#14B8A6]" : "bg-white/10")}
               >
-                <div
-                  className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200"
-                  style={{ left: calmMode ? "calc(100% - 22px)" : "2px" }}
-                />
+                <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200" style={{ left: calmMode ? "calc(100% - 22px)" : "2px" }} />
               </button>
             </div>
 
@@ -246,19 +358,18 @@ export default function PracticePage() {
           </CardContent>
         </Card>
 
-        {/* Topic Focus — collapsible */}
+        {/* Topic Focus — multi-select */}
         <Card className="mb-6">
           <button
             onClick={() => setShowTopicFilter(!showTopicFilter)}
             className="w-full p-4 flex items-center justify-between hover:bg-white/3 transition-colors rounded-2xl"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Target className="w-5 h-5 text-violet-400" />
               <span className="text-sm font-semibold text-white">Topic Focus</span>
-              {selectedSkill && (
-                <Badge variant="secondary" className="text-xs gap-1">
-                  {selectedSubtopic || selectedSkill}
-                  <X className="w-3 h-3" onClick={(e) => { e.stopPropagation(); setSelectedSkill(null); setSelectedSubtopic(null); }} />
+              {selectedTopics.size > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {selectedTopics.size} topic{selectedTopics.size !== 1 ? "s" : ""} selected
                 </Badge>
               )}
             </div>
@@ -266,54 +377,71 @@ export default function PracticePage() {
           </button>
 
           {showTopicFilter && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="px-4 pb-4 space-y-4">
-              {/* Skill picker */}
-              <div>
-                <p className="text-xs text-slate-500 mb-2 font-medium">Select a skill to focus on:</p>
-                <div className="flex flex-wrap gap-2">
-                  {availableSkills.map(({ skill }) => (
-                    <button
-                      key={skill}
-                      onClick={() => setSelectedSkill(selectedSkill === skill ? null : skill)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
-                        selectedSkill === skill
-                          ? "bg-violet-500/15 border-violet-500/40 text-violet-400"
-                          : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-200"
-                      )}
-                    >
-                      {skill}
-                    </button>
-                  ))}
-                </div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="px-4 pb-4 space-y-3">
+              {/* Select all / Clear */}
+              <div className="flex items-center gap-2">
+                <button onClick={selectAllTopics} className="text-xs px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-400 hover:bg-violet-500/20 transition-colors">Select All</button>
+                {selectedTopics.size > 0 && (
+                  <button onClick={clearAllTopics} className="text-xs px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 transition-colors">Clear All</button>
+                )}
+                <span className="text-xs text-slate-600 ml-auto">{selectedTopics.size} selected</span>
               </div>
 
-              {/* Subtopic picker */}
-              {selectedSkillData && (
-                <div>
-                  <p className="text-xs text-slate-500 mb-2 font-medium">Narrow to a subtopic (optional):</p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedSkillData.subtopics.map((sub) => (
-                      <button
-                        key={sub}
-                        onClick={() => setSelectedSubtopic(selectedSubtopic === sub ? null : sub)}
-                        className={cn(
-                          "px-2.5 py-1 rounded-full text-xs border transition-all",
-                          selectedSubtopic === sub
-                            ? "bg-teal-500/15 border-teal-500/40 text-teal-400"
-                            : "bg-white/3 border-white/8 text-slate-500 hover:border-white/15 hover:text-slate-300"
-                        )}
-                      >
-                        {sub}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Skill groups */}
+              <div className="space-y-2">
+                {availableSkillGroups.map(({ skill, icon, subtopics }) => {
+                  const allSelected = subtopics.every(s => selectedTopics.has(s));
+                  const someSelected = subtopics.some(s => selectedTopics.has(s));
+                  const isExpanded = expandedSkills.has(skill);
 
-              {!selectedSkill && (
-                <p className="text-xs text-slate-600 italic">Leave unset for mixed topics</p>
-              )}
+                  return (
+                    <div key={skill} className="rounded-xl border border-white/8 overflow-hidden">
+                      <div className="flex items-center gap-2 p-2.5 bg-white/3">
+                        <button
+                          onClick={() => toggleSkillGroup(skill)}
+                          className="flex-shrink-0"
+                        >
+                          {allSelected
+                            ? <CheckSquare className="w-4 h-4 text-violet-400" />
+                            : someSelected
+                            ? <CheckSquare className="w-4 h-4 text-violet-400/50" />
+                            : <Square className="w-4 h-4 text-slate-600" />
+                          }
+                        </button>
+                        <span className="text-sm">{icon}</span>
+                        <span className="text-sm font-semibold text-white flex-1">{skill}</span>
+                        <span className="text-xs text-slate-600">{subtopics.filter(s => selectedTopics.has(s)).length}/{subtopics.length}</span>
+                        <button onClick={() => toggleSkillExpand(skill)} className="text-slate-500 hover:text-white transition-colors p-0.5">
+                          {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+
+                      {isExpanded && (
+                        <div className="border-t border-white/8 px-3 py-2 space-y-1">
+                          {subtopics.map(sub => (
+                            <button
+                              key={sub}
+                              onClick={() => toggleTopic(sub)}
+                              className={cn(
+                                "w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-left transition-all",
+                                selectedTopics.has(sub)
+                                  ? "bg-teal-500/10 text-teal-300"
+                                  : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+                              )}
+                            >
+                              {selectedTopics.has(sub)
+                                ? <CheckSquare className="w-3.5 h-3.5 text-teal-400 flex-shrink-0" />
+                                : <Square className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+                              }
+                              {sub}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </motion.div>
           )}
         </Card>
@@ -323,8 +451,8 @@ export default function PracticePage() {
           <span>{count} questions</span>
           <span>·</span>
           <span>~{Math.round(count * 1.5)}–{count * 2} min</span>
-          {selectedSkill && (
-            <><span>·</span><Badge variant="secondary" className="text-xs">{selectedSubtopic || selectedSkill}</Badge></>
+          {selectedTopics.size > 0 && (
+            <><span>·</span><span className="text-violet-400">{selectedTopics.size} topic{selectedTopics.size > 1 ? "s" : ""}</span></>
           )}
           {calmMode && (
             <><span>·</span><Badge variant="calm" className="gap-1"><Wind className="w-3 h-3" />Calm</Badge></>
