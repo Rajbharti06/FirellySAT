@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Menu, X, Flame, BookOpen, LayoutDashboard,
-  Sparkles, BookMarked, Wind, FileText, Sun, Moon
+  Sparkles, BookMarked, Wind, FileText, Sun, Moon, Brain, GraduationCap,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
@@ -15,11 +15,13 @@ import { useTheme } from "@/context/ThemeContext";
 const navLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/practice", label: "Practice", icon: Flame },
+  { href: "/diagnostic", label: "Diagnostic", icon: Brain },
+  { href: "/vocab", label: "Vocab", icon: GraduationCap },
   { href: "/mock-test", label: "Mock Test", icon: FileText },
   { href: "/study-plan", label: "Study Plan", icon: Sparkles },
-  { href: "/questionbank", label: "Question Bank", icon: BookMarked },
-  { href: "/notes", label: "Notes", icon: FileText },
-  { href: "/calm", label: "Calm Mode", icon: Wind },
+  { href: "/questionbank", label: "Q Bank", icon: BookMarked },
+  { href: "/notes", label: "Notes", icon: BookOpen },
+  { href: "/calm", label: "Calm", icon: Wind },
 ];
 
 export function Navbar() {

@@ -4,12 +4,12 @@ export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Clock, Target, Award, BookOpen } from "lucide-react";
+import { TrendingUp, Clock, Target, Award, BookOpen, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { getMockAttempts } from "@/lib/storage";
+import { getMockAttempts, getSuperScore } from "@/lib/storage";
 import { formatTime, cn } from "@/lib/utils";
 import type { MockTestAttempt } from "@/types";
 import Link from "next/link";
@@ -41,6 +41,7 @@ export default function MockHistoryPage() {
   const best = Math.max(...attempts.map(a => a.totalScore));
   const latest = attempts[0];
   const improvement = attempts.length > 1 ? attempts[0].totalScore - attempts[attempts.length - 1].totalScore : null;
+  const superScore = getSuperScore();
 
   return (
     <div className="min-h-screen bg-[#050B18] pt-24 pb-16">
@@ -52,6 +53,34 @@ export default function MockHistoryPage() {
           </h1>
           <p className="text-slate-400">{attempts.length} test{attempts.length !== 1 ? "s" : ""} taken</p>
         </motion.div>
+
+        {/* Super Score banner */}
+        {superScore && attempts.length > 1 && (
+          <Card className="mb-6 border-[#F59E0B]/30">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 border border-[#F59E0B]/20 flex items-center justify-center">
+                    <Trophy className="w-5 h-5 text-[#F59E0B]" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-white">Super Score</div>
+                    <div className="text-xs text-slate-400">Your best Math + best R&W combined</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-[#F59E0B]">{superScore.total}</div>
+                  <div className="text-sm text-slate-400">
+                    <span className="text-violet-400">{superScore.math}</span>
+                    <span className="text-slate-600"> Math + </span>
+                    <span className="text-[#14B8A6]">{superScore.rw}</span>
+                    <span className="text-slate-600"> R&W</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Summary stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">

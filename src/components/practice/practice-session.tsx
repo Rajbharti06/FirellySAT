@@ -27,6 +27,8 @@ interface PracticeSessionProps {
   questions: Question[];
   isAdaptive?: boolean;
   calmMode?: boolean;
+  speedrunMode?: boolean;
+  speedrunSeconds?: number;
   onComplete?: (answers: SessionAnswer[]) => void;
   onClose?: () => void;
 }
@@ -45,6 +47,8 @@ export function PracticeSession({
   questions,
   isAdaptive = false,
   calmMode = false,
+  speedrunMode = false,
+  speedrunSeconds = 45,
   onComplete,
   onClose,
 }: PracticeSessionProps) {
@@ -73,6 +77,8 @@ export function PracticeSession({
   const [showNavigator, setShowNavigator] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showDesmos, setShowDesmos] = useState(false);
+  const [speedrunCountdown, setSpeedrunCountdown] = useState(speedrunSeconds);
+  const speedrunRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const questionTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -107,6 +113,49 @@ export function PracticeSession({
       setTimeout(() => setShowCalm(false), 5000);
     }
   }, [questionTime, calmMode]);
+
+  // Speedrun per-question countdown
+  useEffect(() => {
+    if (!speedrunMode) return;
+    setSpeedrunCountdown(speedrunSeconds);
+    if (speedrunRef.current) clearInterval(speedrunRef.current);
+    speedrunRef.current = setInterval(() => {
+      setSpeedrunCountdown(c => {
+        if (c <= 1) {
+          if (speedrunRef.current) clearInterval(speedrunRef.current);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => { if (speedrunRef.current) clearInterval(speedrunRef.current); };
+  }, [currentIndex, speedrunMode, speedrunSeconds]);
+
+  // Auto-advance when speedrun timer hits 0
+  useEffect(() => {
+    if (!speedrunMode || speedrunCountdown !== 0) return;
+    if (submitted.has(currentIndex)) return;
+    // Auto-submit with empty answer and advance
+    const q = currentQuestion;
+    if (!q) return;
+    setSubmitted(prev => new Set(prev).add(currentIndex));
+    setPerQuestionTimes(prev => new Map(prev).set(currentIndex, questionTime));
+    if (!answers.has(currentIndex)) {
+      addLogbookEntry({
+        timestamp: new Date().toISOString(),
+        questionId: q.id,
+        stem: q.stem,
+        domain: q.domain,
+        skill: q.skill,
+        difficulty: q.difficulty,
+        userAnswer: "",
+        correctAnswer: q.correctAnswer,
+        rationale: q.rationale,
+        source: "practice",
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speedrunCountdown]);
 
   // Pick next adaptive question based on performance
   const pickAdaptiveNext = useCallback((isCorrect: boolean) => {
@@ -344,10 +393,22 @@ export function PracticeSession({
               <div className="flex-1" />
 
               {/* Right: Timers + Tools */}
-              <div className={cn("flex items-center gap-1 text-xs font-mono font-bold flex-shrink-0", qtColor)}>
-                <Timer className="w-3.5 h-3.5" />
-                {formatTime(questionTime)}
-              </div>
+              {speedrunMode ? (
+                <div className={cn(
+                  "flex items-center gap-1 text-xs font-mono font-bold flex-shrink-0 px-2 py-1 rounded-lg",
+                  speedrunCountdown > 15 ? "text-emerald-400 bg-emerald-400/10" :
+                  speedrunCountdown > 5 ? "text-amber-400 bg-amber-400/10 animate-pulse" :
+                  "text-red-400 bg-red-400/10 animate-pulse"
+                )}>
+                  <Timer className="w-3.5 h-3.5" />
+                  {speedrunCountdown}s
+                </div>
+              ) : (
+                <div className={cn("flex items-center gap-1 text-xs font-mono font-bold flex-shrink-0", qtColor)}>
+                  <Timer className="w-3.5 h-3.5" />
+                  {formatTime(questionTime)}
+                </div>
+              )}
               <span className="text-slate-700 text-xs">|</span>
               <span className="text-xs text-slate-500 font-mono flex-shrink-0">{formatTime(timeSeconds)}</span>
 
@@ -367,8 +428,19 @@ export function PracticeSession({
                 <Grid3x3 className="w-4 h-4" />
               </button>
               {calmMode && <Badge variant="calm" className="hidden sm:flex gap-1 flex-shrink-0"><Wind className="w-3 h-3" />Calm</Badge>}
+              {speedrunMode && <Badge variant="secondary" className="hidden sm:flex gap-1 flex-shrink-0 text-violet-300 bg-violet-500/10 border-violet-500/30"><Timer className="w-3 h-3" />Speedrun</Badge>}
             </div>
             <Progress value={progress} className="h-1" />
+            {speedrunMode && !submitted.has(currentIndex) && (
+              <Progress
+                value={(speedrunCountdown / speedrunSeconds) * 100}
+                className="h-0.5 mt-0.5"
+                indicatorClassName={
+                  speedrunCountdown > 15 ? "bg-emerald-400" :
+                  speedrunCountdown > 5 ? "bg-amber-400" : "bg-red-400"
+                }
+              />
+            )}
           </div>
 
           {/* Navigator strip */}

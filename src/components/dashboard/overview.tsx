@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Flame, Target, TrendingUp, Clock, BookMarked,
-  CheckCircle2, Sparkles, Brain, Wind, ArrowRight, FileText
+  CheckCircle2, Sparkles, Brain, Wind, ArrowRight, FileText,
+  Zap, Star, Trophy, BookOpen,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -17,13 +18,14 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   getStats, getDefaultStats, getSavedQuestions, getStudyPlan,
-  getLatestMockScore, getMockAttempts
+  getLatestMockScore, getMockAttempts, getXPData, getLevelInfo,
+  getDailyGoal, getSuperScore, LEVEL_TITLES,
 } from "@/lib/storage";
 import {
   predictScore, getGreeting, getMotivationalQuote,
   formatDuration, formatTime, domainLabel
 } from "@/lib/utils";
-import type { PracticeStatistics, MockTestAttempt } from "@/types";
+import type { PracticeStatistics, MockTestAttempt, XPData, DailyGoalData } from "@/types";
 
 export function DashboardOverview() {
   const [stats, setStats] = useState<PracticeStatistics>(getDefaultStats());
@@ -32,6 +34,9 @@ export function DashboardOverview() {
   const [quote, setQuote] = useState("");
   const [latestMock, setLatestMock] = useState<MockTestAttempt | null>(null);
   const [mockAttempts, setMockAttempts] = useState<MockTestAttempt[]>([]);
+  const [xpData, setXpData] = useState<XPData>({ totalXP: 0, level: 1 });
+  const [dailyGoal, setDailyGoal] = useState<DailyGoalData>({ targetQuestions: 10, completedToday: 0, date: "" });
+  const [superScore, setSuperScore] = useState<{ math: number; rw: number; total: number } | null>(null);
 
   useEffect(() => {
     setStats(getStats());
@@ -40,6 +45,9 @@ export function DashboardOverview() {
     setQuote(getMotivationalQuote());
     setLatestMock(getLatestMockScore());
     setMockAttempts(getMockAttempts());
+    setXpData(getXPData());
+    setDailyGoal(getDailyGoal());
+    setSuperScore(getSuperScore());
   }, []);
 
   const prediction = predictScore(stats);
@@ -141,6 +149,77 @@ export function DashboardOverview() {
             </Card>
           </motion.div>
         ))}
+      </div>
+
+      {/* XP / Level + Daily Goal row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* XP Level card */}
+        <Card>
+          <CardContent className="p-4">
+            {(() => {
+              const info = getLevelInfo(xpData.totalXP);
+              return (
+                <>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-[#F59E0B]/10 border border-[#F59E0B]/20 flex items-center justify-center">
+                        <Zap className="w-4 h-4 text-[#F59E0B]" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-white">Level {info.level}</div>
+                        <div className="text-xs text-slate-500">{info.title}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-[#F59E0B]">{xpData.totalXP} XP</div>
+                      <div className="text-xs text-slate-600">{info.xpForNext > xpData.totalXP ? `${info.xpForNext - xpData.totalXP} to next` : "Max level!"}</div>
+                    </div>
+                  </div>
+                  <Progress value={info.progress} className="h-1.5" indicatorClassName="bg-gradient-to-r from-[#F59E0B] to-amber-300" />
+                  <div className="flex justify-between text-xs text-slate-600 mt-1">
+                    <span>{info.title}</span>
+                    <span>{LEVEL_TITLES[info.level] ?? "SAT Legend"}</span>
+                  </div>
+                </>
+              );
+            })()}
+          </CardContent>
+        </Card>
+
+        {/* Daily Goal card */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center">
+                  <Target className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-white">Daily Goal</div>
+                  <div className="text-xs text-slate-500">Questions today</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className={`text-sm font-semibold ${dailyGoal.completedToday >= dailyGoal.targetQuestions ? "text-emerald-400" : "text-slate-300"}`}>
+                  {dailyGoal.completedToday} / {dailyGoal.targetQuestions}
+                </div>
+                <div className="text-xs text-slate-600">
+                  {dailyGoal.completedToday >= dailyGoal.targetQuestions ? "Goal achieved!" : `${dailyGoal.targetQuestions - dailyGoal.completedToday} to go`}
+                </div>
+              </div>
+            </div>
+            <Progress
+              value={Math.min(100, (dailyGoal.completedToday / dailyGoal.targetQuestions) * 100)}
+              className="h-1.5"
+              indicatorClassName={dailyGoal.completedToday >= dailyGoal.targetQuestions ? "bg-gradient-to-r from-emerald-500 to-emerald-400" : "bg-gradient-to-r from-[#14B8A6] to-[#2DD4BF]"}
+            />
+            {dailyGoal.completedToday >= dailyGoal.targetQuestions && (
+              <p className="text-xs text-emerald-400 mt-1.5 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Daily goal complete!
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Weekly goal */}
@@ -403,20 +482,48 @@ export function DashboardOverview() {
         </Card>
       )}
 
+      {/* Super Score banner */}
+      {superScore && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-[#F59E0B]" />
+                <div>
+                  <div className="text-sm font-bold text-white">Super Score</div>
+                  <div className="text-xs text-slate-500">Best Math + Best R&W across all mocks</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-[#F59E0B]">{superScore.total}</div>
+                <div className="text-xs text-slate-500">
+                  <span className="text-violet-400">{superScore.math}</span>
+                  <span className="text-slate-600"> + </span>
+                  <span className="text-[#14B8A6]">{superScore.rw}</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Quick actions */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         {[
           { href: "/practice", icon: Flame, label: "Practice Rush", color: "text-[#F59E0B]" },
+          { href: "/diagnostic", icon: Brain, label: "Diagnostic", color: "text-violet-400" },
+          { href: "/vocab", icon: BookOpen, label: "Vocabulary", color: "text-blue-400" },
           { href: "/mock-test", icon: FileText, label: "Mock Test", color: "text-emerald-400" },
-          { href: "/study-plan", icon: Sparkles, label: "AI Study Plan", color: "text-violet-400" },
+          { href: "/study-plan", icon: Sparkles, label: "AI Study Plan", color: "text-amber-400" },
           { href: "/calm", icon: Wind, label: "Calm Mode", color: "text-[#14B8A6]" },
-          { href: "/questionbank", icon: BookMarked, label: "Question Bank", color: "text-blue-400" },
+          { href: "/questionbank", icon: BookMarked, label: "Question Bank", color: "text-teal-400" },
+          { href: "/notes", icon: Star, label: "Notes", color: "text-rose-400" },
         ].map(({ href, icon: Icon, label, color }) => (
           <Link key={href} href={href}>
             <Card className="hover:bg-[#0F1B35] transition-all hover:scale-[1.02] cursor-pointer h-full">
-              <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-                <Icon className={`w-6 h-6 ${color}`} />
-                <span className="text-sm font-medium text-slate-200">{label}</span>
+              <CardContent className="p-3 flex flex-col items-center text-center gap-2">
+                <Icon className={`w-5 h-5 ${color}`} />
+                <span className="text-xs font-medium text-slate-200">{label}</span>
               </CardContent>
             </Card>
           </Link>

@@ -273,3 +273,24 @@ export interface MockTestAttempt {
   mathTotal: 44;
   durationSeconds: number;
 }
+
+// XP / Level system
+export interface XPData {
+  totalXP: number;
+  level: number;
+}
+
+// Daily goal
+export interface DailyGoalData {
+  targetQuestions: number;
+  completedToday: number;
+  date: string;
+}
+
+// Vocab progress
+export interface VocabProgressItem {
+  mastered: boolean;
+  attempts: number;
+  lastSeen: string;
+}
+export type VocabProgressData = Record<string, VocabProgressItem>;

@@ -7,16 +7,18 @@ import { motion } from "framer-motion";
 import {
   Flame, Settings2, Wind, Calculator, BookOpen, Zap, X,
   Target, TrendingUp, CheckSquare, Square, ChevronDown, ChevronUp,
+  Timer, Shuffle, AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PracticeSession } from "@/components/practice/practice-session";
-import { getSettings } from "@/lib/storage";
+import { getSettings, getWeakSkills } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import type { Question, QuestionDomain, QuestionDifficulty } from "@/types";
 
 type PracticeMode = "idle" | "loading" | "active";
+type QuickMode = "random" | "weak" | "speedrun" | "hard";
 
 const MATH_SKILLS = [
   {
@@ -114,6 +116,7 @@ export default function PracticePage() {
   const [expandedSkills, setExpandedSkills] = useState<Set<string>>(new Set());
   const [showTopicFilter, setShowTopicFilter] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [speedrunMode, setSpeedrunMode] = useState(false);
 
   useEffect(() => {
     const settings = getSettings();
@@ -173,7 +176,36 @@ export default function PracticePage() {
     });
   };
 
+  const startQuickPractice = async (quick: QuickMode) => {
+    setMode("loading");
+    setError(null);
+    setSpeedrunMode(quick === "speedrun");
+    try {
+      const params = new URLSearchParams({ count: "15" });
+      if (quick === "hard") {
+        params.set("difficulty", "H");
+      } else if (quick === "weak") {
+        const weakSkills = getWeakSkills(2);
+        if (weakSkills.length > 0) {
+          params.set("skill", weakSkills[0]);
+        }
+      }
+      // speedrun and random use defaults (mixed, medium)
+      const res = await fetch(`/api/questions?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to load questions");
+      const data = await res.json();
+      const qs: Question[] = data.questions ?? [];
+      if (qs.length === 0) throw new Error("No questions found.");
+      setQuestions(qs);
+      setMode("active");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start practice");
+      setMode("idle");
+    }
+  };
+
   const startPractice = async () => {
+    setSpeedrunMode(false);
     setMode("loading");
     setError(null);
 
@@ -221,7 +253,8 @@ export default function PracticePage() {
         questions={questions}
         calmMode={calmMode}
         isAdaptive={isAdaptive}
-        onClose={() => setMode("idle")}
+        speedrunMode={speedrunMode}
+        onClose={() => { setMode("idle"); setSpeedrunMode(false); }}
         onComplete={() => {}}
       />
     );
@@ -244,6 +277,73 @@ export default function PracticePage() {
             <p className="text-sm text-red-400">{error}</p>
           </div>
         )}
+
+        {/* Quick Launch */}
+        <div className="mb-5">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Quick Launch</p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              {
+                mode: "random" as QuickMode,
+                icon: Shuffle,
+                label: "Random Drill",
+                sub: "10 mixed questions, start now",
+                color: "text-[#F59E0B]",
+                bg: "bg-[#F59E0B]/8 hover:bg-[#F59E0B]/15",
+                border: "border-[#F59E0B]/20 hover:border-[#F59E0B]/40",
+              },
+              {
+                mode: "weak" as QuickMode,
+                icon: Target,
+                label: "Fix Weak Spots",
+                sub: "Target your lowest-scoring skills",
+                color: "text-red-400",
+                bg: "bg-red-500/8 hover:bg-red-500/15",
+                border: "border-red-500/20 hover:border-red-500/40",
+              },
+              {
+                mode: "speedrun" as QuickMode,
+                icon: Timer,
+                label: "Speedrun",
+                sub: "45 seconds per question",
+                color: "text-violet-400",
+                bg: "bg-violet-500/8 hover:bg-violet-500/15",
+                border: "border-violet-500/20 hover:border-violet-500/40",
+              },
+              {
+                mode: "hard" as QuickMode,
+                icon: Flame,
+                label: "Hard Mode",
+                sub: "Hard questions only",
+                color: "text-orange-400",
+                bg: "bg-orange-500/8 hover:bg-orange-500/15",
+                border: "border-orange-500/20 hover:border-orange-500/40",
+              },
+            ].map(({ mode: qMode, icon: Icon, label, sub, color, bg, border }) => (
+              <button
+                key={qMode}
+                onClick={() => startQuickPractice(qMode)}
+                disabled={mode === "loading"}
+                className={cn(
+                  "p-4 rounded-xl border text-left transition-all",
+                  bg, border,
+                  mode === "loading" && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <Icon className={cn("w-5 h-5 mb-2", color)} />
+                <div className="text-sm font-semibold text-white">{label}</div>
+                <div className="text-xs text-slate-500 mt-0.5">{sub}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className="flex-1 h-px bg-white/8" />
+          <span className="text-xs text-slate-600 font-medium">or configure your own</span>
+          <div className="flex-1 h-px bg-white/8" />
+        </div>
 
         {/* Main settings */}
         <Card className="mb-4">

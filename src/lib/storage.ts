@@ -14,6 +14,10 @@ import type {
   MockTestAttempt,
   Folder,
   NoteSnapshot,
+  XPData,
+  DailyGoalData,
+  VocabProgressData,
+  VocabProgressItem,
 } from "@/types";
 import { generateId } from "./utils";
 
@@ -187,6 +191,14 @@ export function recordSessionComplete(
   }
 
   saveStats(stats);
+
+  // Award XP
+  const xpGained = correct * 10 + (attempted - correct) * 3 + 20;
+  addXP(xpGained);
+
+  // Update daily goal
+  updateDailyGoal(attempted);
+
   return session;
 }
 
@@ -429,6 +441,124 @@ export function deleteNoteSnapshot(snapshotId: string): void {
 
 export function getSnapshotsForNote(noteId: string): NoteSnapshot[] {
   return getNoteSnapshots().filter((s) => s.noteId === noteId);
+}
+
+// ─── XP / Level ───────────────────────────────────────────────────────────────
+
+const XP_THRESHOLDS = [0, 100, 300, 600, 1000, 1500, 2200, 3200, 4500, 6500];
+export const LEVEL_TITLES = [
+  "Newcomer", "Explorer", "Learner", "Practitioner", "Achiever",
+  "Scholar", "Expert", "Master", "Elite", "SAT Legend",
+];
+
+export function getXPData(): XPData {
+  return safeGet<XPData>("firellysat_xp", { totalXP: 0, level: 1 });
+}
+
+export function addXP(amount: number): XPData {
+  const data = getXPData();
+  data.totalXP += amount;
+  let level = 1;
+  for (let i = XP_THRESHOLDS.length - 1; i >= 0; i--) {
+    if (data.totalXP >= XP_THRESHOLDS[i]) { level = i + 1; break; }
+  }
+  data.level = level;
+  safeSet("firellysat_xp", data);
+  return data;
+}
+
+export function getLevelInfo(xp: number): {
+  level: number; title: string; xpForCurrent: number; xpForNext: number; progress: number;
+} {
+  let level = 1;
+  for (let i = XP_THRESHOLDS.length - 1; i >= 0; i--) {
+    if (xp >= XP_THRESHOLDS[i]) { level = i + 1; break; }
+  }
+  const xpForCurrent = XP_THRESHOLDS[level - 1] ?? 0;
+  const xpForNext = XP_THRESHOLDS[level] ?? XP_THRESHOLDS[XP_THRESHOLDS.length - 1];
+  const progress = xpForNext > xpForCurrent
+    ? Math.min(100, Math.round(((xp - xpForCurrent) / (xpForNext - xpForCurrent)) * 100))
+    : 100;
+  return { level, title: LEVEL_TITLES[level - 1] ?? "SAT Legend", xpForCurrent, xpForNext, progress };
+}
+
+// ─── Daily Goal ───────────────────────────────────────────────────────────────
+
+export function getDailyGoal(): DailyGoalData {
+  const today = new Date().toDateString();
+  const stored = safeGet<DailyGoalData>("firellysat_daily_goal", {
+    targetQuestions: 10, completedToday: 0, date: today,
+  });
+  if (stored.date !== today) {
+    const reset = { ...stored, completedToday: 0, date: today };
+    safeSet("firellysat_daily_goal", reset);
+    return reset;
+  }
+  return stored;
+}
+
+export function updateDailyGoal(questionsAttempted: number): void {
+  const goal = getDailyGoal();
+  goal.completedToday += questionsAttempted;
+  safeSet("firellysat_daily_goal", goal);
+}
+
+export function setDailyGoalTarget(target: number): void {
+  const goal = getDailyGoal();
+  goal.targetQuestions = Math.max(1, target);
+  safeSet("firellysat_daily_goal", goal);
+}
+
+// ─── Vocab Progress ───────────────────────────────────────────────────────────
+
+export function getVocabProgress(): VocabProgressData {
+  return safeGet<VocabProgressData>("firellysat_vocab_progress", {});
+}
+
+export function markVocabWord(word: string, mastered: boolean): void {
+  const progress = getVocabProgress();
+  const existing: VocabProgressItem = progress[word] ?? { mastered: false, attempts: 0, lastSeen: "" };
+  progress[word] = {
+    mastered: mastered || existing.mastered,
+    attempts: existing.attempts + 1,
+    lastSeen: new Date().toISOString(),
+  };
+  safeSet("firellysat_vocab_progress", progress);
+}
+
+export function resetVocabWord(word: string): void {
+  const progress = getVocabProgress();
+  delete progress[word];
+  safeSet("firellysat_vocab_progress", progress);
+}
+
+// ─── Weak Skills (for Commonly Missed mode) ───────────────────────────────────
+
+export function getWeakSkills(minAttempts = 3): string[] {
+  const stats = getStats();
+  const skills: { skill: string; accuracy: number }[] = [];
+  for (const domain of Object.values(stats.byDomain)) {
+    for (const s of domain.bySkill) {
+      if (s.totalAttempted >= minAttempts) {
+        skills.push({ skill: s.skill, accuracy: s.accuracy });
+      }
+    }
+  }
+  return skills
+    .filter(s => s.accuracy < 70)
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .slice(0, 5)
+    .map(s => s.skill);
+}
+
+// ─── Super Score ──────────────────────────────────────────────────────────────
+
+export function getSuperScore(): { math: number; rw: number; total: number } | null {
+  const attempts = getMockAttempts();
+  if (attempts.length === 0) return null;
+  const bestMath = Math.max(...attempts.map(a => a.mathScore));
+  const bestRW = Math.max(...attempts.map(a => a.rwScore));
+  return { math: bestMath, rw: bestRW, total: bestMath + bestRW };
 }
 
 // ─── Mock Test Question Deduplication ─────────────────────────────────────────
